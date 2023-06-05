@@ -1,7 +1,6 @@
 import sys
 import io
 import contextlib
-from dataclasses import dataclass, field, asdict
 from enum import Enum
 
 
@@ -10,13 +9,28 @@ class JUDGE_RESULT(Enum):
     WRONG_ANSWER = 'WA'
 
 
-@dataclass
 class Result:
-    JUDGE_RESULT: str = field(default_factory=str)
-    LINECOUNT: str = field(default_factory=str)
-    USEROUT: str = field(default_factory=str)
-    SYSTEMOUT: str = field(default_factory=str)
-    MESSAGE: str = field(default_factory=str)
+    def __init__(self, JUDGE_RESULT: str='', LINECOUNT: str='', USEROUT: str='', SYSTEMOUT: str='', MESSAGE: str=''):
+        self.JUDGE_RESULT = JUDGE_RESULT
+        self.LINECOUNT = LINECOUNT
+        self.USEROUT = USEROUT
+        self.SYSTEMOUT = SYSTEMOUT
+        self.MESSAGE = MESSAGE
+
+    JUDGE_RESULT: str = ''
+    LINECOUNT: str = ''
+    USEROUT: str = ''
+    SYSTEMOUT: str = ''
+    MESSAGE: str = ''
+
+    def asdict(self):
+        return {
+            '$JUDGE_RESULT': self.JUDGE_RESULT,
+            '$LINECOUNT': self.LINECOUNT,
+            '$USEROUT': self.USEROUT,
+            '$SYSTEMOUT': self.SYSTEMOUT,
+            '$MESSAGE': self.MESSAGE,
+        }
 
 
 class Judge:
@@ -27,11 +41,11 @@ class Judge:
             answerStr = ansfile.read()
 
         result = self.judge(inputStr=inputStr, outputStr=outputStr, answer=answerStr)
-        data = asdict(result)
+        data = result.asdict()
         keys = list(data.keys())
         keys.sort()
         for key in keys:
-            print("$"+key+"="+data[key])
+            print(key+"="+data[key])
 
     def judge(self, inputStr: str, outputStr: str, answer: str) -> Result:
         with redirect_stdin(io.StringIO(inputStr)) as stdin, contextlib.redirect_stdout(io.StringIO()) as stdout:
@@ -72,4 +86,4 @@ class ExecJudge(Judge):
 
 if __name__ == "__main__":
     infile, ansfile, outfile, *args = sys.argv[1:]
-    DefaultJudge().run(input_file_name=infile, output_file_name=outfile, answer_file_name=ansfile)
+    ExecJudge().run(input_file_name=infile, output_file_name=outfile, answer_file_name=ansfile)

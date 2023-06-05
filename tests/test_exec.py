@@ -1,3 +1,4 @@
+import subprocess
 from io import StringIO
 from contextlib import redirect_stdout
 from unittest import TestCase
@@ -16,6 +17,14 @@ class ExecJudgeTest(TestCase):
         stdout.seek(0)
         self.assertEqual(stdout.read(
         ), '3\n')
+
+    def test_cmd(self):
+        with createfile('print(add(1, 2))') as infile, createfile('3') as outfile, createfile('def add(a, b):\n  return a + b') as ansfile:
+            result = subprocess.Popen(['python3', 'judge.py', infile.name, ansfile.name, outfile.name], stdout=subprocess.PIPE)
+            stdout, _ = result.communicate()
+
+        self.assertEqual(
+            stdout.decode(), '$JUDGE_RESULT=AC\n$LINECOUNT=\n$MESSAGE=\n$SYSTEMOUT=\n$USEROUT=\n')
 
     def test_basic(self):
         judge = ExecJudge()
