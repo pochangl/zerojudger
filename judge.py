@@ -34,19 +34,9 @@ class Judge:
             print("$"+key+"="+data[key])
 
     def judge(self, inputStr: str, outputStr: str, answer: str) -> Result:
-        raise NotImplemented
-
-class redirect_stdin(contextlib._RedirectStream):
-    _stream = "stdin"
-
-
-class DefaultJudge(Judge):
-    def judge(self, inputStr: str, outputStr: str, answer: str) -> Result:
         with redirect_stdin(io.StringIO(inputStr)) as stdin, contextlib.redirect_stdout(io.StringIO()) as stdout:
-            stdin.write(inputStr)
-            stdin.seek(0)
             try:
-                exec(answer, {}, {})
+                self.execute(stdin=stdin, inputStr=inputStr, answerStr=answer)
             except Exception as err:
                 stdout.seek(0)
                 return Result(JUDGE_RESULT='WA', USEROUT=outputStr, SYSTEMOUT=stdout.read(), MESSAGE=str(err))
@@ -56,6 +46,20 @@ class DefaultJudge(Judge):
             return Result(JUDGE_RESULT='WA', USEROUT=outputStr, SYSTEMOUT=out)
         else:
             return Result(JUDGE_RESULT='AC')
+
+    def execute(self, inputStr: str, outputStr: str):
+        raise NotImplemented
+
+class redirect_stdin(contextlib._RedirectStream):
+    _stream = "stdin"
+
+
+class DefaultJudge(Judge):
+    def execute(self, stdin: io.IOBase, inputStr: str, answerStr: str):
+        stdin.write(inputStr)
+        stdin.seek(0)
+        exec(answerStr, {}, {})
+
 
 if __name__ == "__main__":
     infile, ansfile, outfile, *args = sys.argv[1:]
