@@ -1,10 +1,8 @@
 import sys
 import io
 import contextlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
-
-from judger import Result
 
 
 class JUDGE_RESULT(Enum):
@@ -28,11 +26,15 @@ class Judge:
             output = outfile.read()
             answer = ansfile.read()
 
-        self.judge(input=input, output=output, answer=answer)
+        result = self.judge(input=input, output=output, answer=answer)
+        data = asdict(result)
+        keys = list(data.keys())
+        keys.sort()
+        for key in keys:
+            print("$"+key+"="+data[key])
 
     def judge(self, input: str, output: str, answer: str) -> Result:
         raise NotImplemented
-import contextlib
 
 
 class redirect_stdin(contextlib._RedirectStream):
@@ -41,15 +43,20 @@ class redirect_stdin(contextlib._RedirectStream):
 
 class DefaultJudge(Judge):
     def judge(self, input: str, output: str, answer: str) -> Result:
-        with redirect_stdin(io.StringIO(input)), contextlib.redirect_stdout(io.StringIO()) as stdout:
-            exec(answer)
-        try:
-            out = stdout.read()
-        except Exception as err:
-            return Result()
-        if out == output:
-
-
+        with redirect_stdin(io.StringIO(input)) as stdin, contextlib.redirect_stdout(io.StringIO()) as stdout:
+            stdin.write(input)
+            stdin.seek(0)
+            try:
+                exec(answer, {}, {})
+            except Exception as err:
+                stdout.seek(0)
+                return Result(JUDGE_RESULT='WA', USEROUT=output, SYSTEMOUT=stdout.read(), MESSAGE=str(err))
+        stdout.seek(0)
+        out = stdout.read()
+        if out.strip() != output.strip():
+            return Result(JUDGE_RESULT='WA', USEROUT=output, SYSTEMOUT=out)
+        else:
+            return Result(JUDGE_RESULT='AC')
 
 
 
