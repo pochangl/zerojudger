@@ -22,42 +22,40 @@ class Result:
 class Judge:
     def run(self, input_file_name: str, output_file_name: str, answer_file_name: str):
         with open(input_file_name) as infile, open(output_file_name) as outfile, open(answer_file_name) as ansfile:
-            input = infile.read()
-            output = outfile.read()
-            answer = ansfile.read()
+            inputStr = infile.read()
+            outputStr = outfile.read()
+            answerStr = ansfile.read()
 
-        result = self.judge(input=input, output=output, answer=answer)
+        result = self.judge(inputStr=inputStr, outputStr=outputStr, answer=answerStr)
         data = asdict(result)
         keys = list(data.keys())
         keys.sort()
         for key in keys:
             print("$"+key+"="+data[key])
 
-    def judge(self, input: str, output: str, answer: str) -> Result:
+    def judge(self, inputStr: str, outputStr: str, answer: str) -> Result:
         raise NotImplemented
-
 
 class redirect_stdin(contextlib._RedirectStream):
     _stream = "stdin"
 
 
 class DefaultJudge(Judge):
-    def judge(self, input: str, output: str, answer: str) -> Result:
-        with redirect_stdin(io.StringIO(input)) as stdin, contextlib.redirect_stdout(io.StringIO()) as stdout:
-            stdin.write(input)
+    def judge(self, inputStr: str, outputStr: str, answer: str) -> Result:
+        with redirect_stdin(io.StringIO(inputStr)) as stdin, contextlib.redirect_stdout(io.StringIO()) as stdout:
+            stdin.write(inputStr)
             stdin.seek(0)
             try:
                 exec(answer, {}, {})
             except Exception as err:
                 stdout.seek(0)
-                return Result(JUDGE_RESULT='WA', USEROUT=output, SYSTEMOUT=stdout.read(), MESSAGE=str(err))
+                return Result(JUDGE_RESULT='WA', USEROUT=outputStr, SYSTEMOUT=stdout.read(), MESSAGE=str(err))
         stdout.seek(0)
         out = stdout.read()
-        if out.strip() != output.strip():
-            return Result(JUDGE_RESULT='WA', USEROUT=output, SYSTEMOUT=out)
+        if out.strip() != outputStr.strip():
+            return Result(JUDGE_RESULT='WA', USEROUT=outputStr, SYSTEMOUT=out)
         else:
             return Result(JUDGE_RESULT='AC')
-
 
 
 result = {"$JUDGE_RESULT": "", "$LINECOUNT": "",
