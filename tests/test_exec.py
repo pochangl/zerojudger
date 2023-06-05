@@ -11,7 +11,7 @@ class ExecJudgeTest(TestCase):
     def test_execute(self):
         judge = ExecJudge()
         stdout = StringIO()
-        with redirect_stdout(stdout), createfile('print(add(1, 2))') as infile, createfile('3') as outfile, createfile('def add(a, b):\n  return a + b') as ansfile:
+        with redirect_stdout(stdout):
             judge.execute(None, 'print(add(1, 2))',
                         'def add(a, b):\n  return a + b')
         stdout.seek(0)
@@ -19,8 +19,8 @@ class ExecJudgeTest(TestCase):
         ), '3\n')
 
     def test_cmd(self):
-        with createfile('print(add(1, 2))') as infile, createfile('3') as outfile, createfile('def add(a, b):\n  return a + b') as ansfile:
-            result = subprocess.Popen(['python3', 'judge.py', infile.name, ansfile.name, outfile.name], stdout=subprocess.PIPE)
+        with createfile('print(add(1, 2))') as infile, createfile('3') as ansfile, createfile('def add(a, b):\n  return a + b') as solfile:
+            result = subprocess.Popen(['python3', 'judge.py', infile.name, ansfile.name, solfile.name], stdout=subprocess.PIPE)
             stdout, _ = result.communicate()
 
         self.assertEqual(
@@ -29,9 +29,9 @@ class ExecJudgeTest(TestCase):
     def test_basic(self):
         judge = ExecJudge()
         stdout = StringIO()
-        with redirect_stdout(stdout), createfile('print(add(1, 2))') as infile, createfile('3') as outfile, createfile('def add(a, b):\n  return a + b') as ansfile:
+        with redirect_stdout(stdout), createfile('print(add(1, 2))') as infile, createfile('3') as ansfile, createfile('def add(a, b):\n  return a + b') as solfile:
             judge.run(input_file_name=infile.name,
-                      output_file_name=outfile.name, answer_file_name=ansfile.name)
+                      solution_file_name=solfile.name, answer_file_name=ansfile.name)
         stdout.seek(0)
         self.assertEqual(stdout.read(
         ), '$JUDGE_RESULT=AC\n$LINECOUNT=\n$MESSAGE=\n$SYSTEMOUT=\n$USEROUT=\n')

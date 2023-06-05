@@ -34,34 +34,34 @@ class Result:
 
 
 class Judge:
-    def run(self, input_file_name: str, output_file_name: str, answer_file_name: str):
-        with open(input_file_name) as infile, open(output_file_name) as outfile, open(answer_file_name) as ansfile:
+    def run(self, input_file_name: str, solution_file_name: str, answer_file_name: str):
+        with open(input_file_name) as infile, open(solution_file_name) as solfile, open(answer_file_name) as ansfile:
             inputStr = infile.read()
-            outputStr = outfile.read()
+            solStr = solfile.read()
             answerStr = ansfile.read()
 
-        result = self.judge(inputStr=inputStr, outputStr=outputStr, answer=answerStr)
+        result = self.judge(inputStr=inputStr, solStr=solStr, answer=answerStr)
         data = result.asdict()
         keys = list(data.keys())
         keys.sort()
         for key in keys:
             print(key+"="+data[key])
 
-    def judge(self, inputStr: str, outputStr: str, answer: str) -> Result:
+    def judge(self, inputStr: str, solStr: str, answer: str) -> Result:
         with redirect_stdin(io.StringIO(inputStr)) as stdin, contextlib.redirect_stdout(io.StringIO()) as stdout:
             try:
-                self.execute(stdin=stdin, inputStr=inputStr, answerStr=answer)
+                self.execute(stdin=stdin, inputStr=inputStr, solStr=solStr)
             except Exception as err:
                 stdout.seek(0)
-                return Result(JUDGE_RESULT='WA', USEROUT=outputStr, SYSTEMOUT=stdout.read(), MESSAGE=str(err))
+                return Result(JUDGE_RESULT='WA', USEROUT=stdout.read(), SYSTEMOUT=answer, MESSAGE=str(err))
         stdout.seek(0)
         out = stdout.read()
-        if out.strip() != outputStr.strip():
-            return Result(JUDGE_RESULT='WA', USEROUT=outputStr, SYSTEMOUT=out)
+        if out.strip() != answer.strip():
+            return Result(JUDGE_RESULT='WA', USEROUT=out, SYSTEMOUT=answer)
         else:
             return Result(JUDGE_RESULT='AC')
 
-    def execute(self, inputStr: str, outputStr: str):
+    def execute(self, stdin: io.IOBase, inputStr: str, solStr: str):
         raise NotImplemented
 
 
@@ -70,20 +70,20 @@ class redirect_stdin(contextlib._RedirectStream):
 
 
 class DefaultJudge(Judge):
-    def execute(self, stdin: io.IOBase, inputStr: str, answerStr: str):
+    def execute(self, stdin: io.IOBase, inputStr: str, solStr: str):
         stdin.write(inputStr)
         stdin.seek(0)
-        exec(answerStr, {}, {})
+        exec(solStr, {}, {})
 
 
 class ExecJudge(Judge):
-    def execute(self, stdin: io.IOBase, inputStr: str, answerStr: str):
+    def execute(self, stdin: io.IOBase, inputStr: str, solStr: str):
         glb = {}
         loc = {}
-        exec(answerStr, glb, loc)
+        exec(solStr, glb, loc)
         exec(inputStr, glb, loc)
 
 
 if __name__ == "__main__":
-    infile, ansfile, outfile, *args = sys.argv[1:]
-    ExecJudge().run(input_file_name=infile, output_file_name=outfile, answer_file_name=ansfile)
+    infile, ansfile, solfile, *args = sys.argv[1:]
+    ExecJudge().run(input_file_name=infile, solution_file_name=solfile, answer_file_name=ansfile)
