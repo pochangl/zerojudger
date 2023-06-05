@@ -50,6 +50,7 @@ class Judge:
     def execute(self, inputStr: str, outputStr: str):
         raise NotImplemented
 
+
 class redirect_stdin(contextlib._RedirectStream):
     _stream = "stdin"
 
@@ -59,6 +60,14 @@ class DefaultJudge(Judge):
         stdin.write(inputStr)
         stdin.seek(0)
         exec(answerStr, {}, {})
+
+
+class ExecJudge(Judge):
+    def execute(self, stdin: io.IOBase, inputStr: str, answerStr: str):
+        glb = {}
+        loc = {}
+        exec(answerStr, glb, loc)
+        exec(inputStr, glb, loc)
 
 
 if __name__ == "__main__":

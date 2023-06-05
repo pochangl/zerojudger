@@ -1,16 +1,8 @@
-import contextlib
 from io import StringIO
 from contextlib import redirect_stdout
 from unittest import TestCase
 from judge import DefaultJudge
-import tempfile
-
-@contextlib.contextmanager
-def createfile(str):
-    with tempfile.NamedTemporaryFile() as infile:
-        infile.write(str.encode())
-        infile.seek(0)
-        yield infile
+from .utils import createfile
 
 
 class DefaultJudgeTest(TestCase):
